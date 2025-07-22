@@ -1,0 +1,47 @@
+labels: [needs-triage]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out the sections below to properly describe your idea.
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the idea"
+      placeholder: A thing in X that allows to do Y.
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: "It should be done because"
+      placeholder: Doing Y is needed for Z.
+    validations:
+      required: true
+  - type: textarea
+    id: alternative
+    attributes:
+      label: "What are the alternatives?"
+      placeholder: We could do A or B instead.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Additional information you want to provide such as references to related ideas or protocols, the implications on existing use cases, etc.
+      placeholder: |
+        Add any other context about the idea here.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Extra fields
+      options:
+        - label: I have checked the existing [New Ideas](https://github.com/orgs/X11Libre/discussions/categories/1-new-ideas), [RFCs Of The Core Team](https://github.com/orgs/X11Libre/discussions/categories/2-rfcs-of-the-core-team), [Ideas Soon To Be Addressed](https://github.com/orgs/X11Libre/discussions/categories/3-ideas-soon-to-be-addressed) and [Someday Ideas](https://github.com/orgs/X11Libre/discussions/categories/4-good-ideas-for-later)
+          required: true
+        - label: I have read the [Contributing Guidelines](https://github.com/X11Libre/.github/blob/master/CONTRIBUTING.md)
+          required: true
+        - label: I'd like to work on this idea
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your idea! Let's see together if it can be done.
