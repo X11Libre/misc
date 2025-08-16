@@ -20,6 +20,8 @@ You are now ready to use all the scripts.
 
 - rename_indexed_nodouble.py (to check for identical logos and reindex all logo names)
 
+- upload_logos.py (to upload all the logos to a github directory)
+
 - create_poll_issue_gallery.py (to create the poll in github/issue)
 
 - calculate_poll_results_restrict_user.py (to calculate the poll results; you can use crontab to update the results every xx minutes)

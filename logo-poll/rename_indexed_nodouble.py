@@ -6,6 +6,8 @@ from pathlib import Path
 from datetime import datetime
 from PIL import Image
 import imagehash
+import cairosvg
+import tempfile
 
 # Set up logging to console and file
 logging.basicConfig(
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 SOURCE_LOGOS_DIR = "resized_logos"  # Source directory with original logo files
 DEST_LOGOS_DIR = "renamed_logos"  # Temporary destination directory for renamed logo files
-ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}  # Supported extensions
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'}  # Supported extensions
 DRY_RUN = False  # Set to True to preview copying without modifying files
 REPLACE_ORIGINAL_DIR = False  # Set to True to delete SOURCE_LOGOS_DIR and rename DEST_LOGOS_DIR to SOURCE_LOGOS_DIR
 FILTER_DUPLICATE_IMAGES = True  # Set to True to filter duplicate images based on content
@@ -29,10 +31,20 @@ HASH_THRESHOLD = 0  # Hamming distance threshold for image similarity (0 for exa
 DUPLICATE_LOG_FILE = "/home/fred/xlibre_logo/logo_duplicate.txt"  # File to log duplicate logos
 
 def compute_image_hash(file_path):
-    """Compute perceptual hash of an image file."""
+    """Compute perceptual hash of an image file, converting SVG to PNG if needed."""
     try:
-        with Image.open(file_path) as img:
-            return str(imagehash.average_hash(img))
+        if file_path.suffix.lower() == '.svg':
+            # Create a temporary PNG file for hashing
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+                temp_path = temp_file.name
+                cairosvg.svg2png(url=str(file_path), output_path=temp_path, output_width=100, output_height=100)
+                with Image.open(temp_path) as img:
+                    hash_value = str(imagehash.average_hash(img))
+                os.unlink(temp_path)  # Clean up temporary file
+                return hash_value
+        else:
+            with Image.open(file_path) as img:
+                return str(imagehash.average_hash(img))
     except Exception as e:
         logger.warning(f"Failed to compute hash for {file_path.name}: {e}")
         return None
