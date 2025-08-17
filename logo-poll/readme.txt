@@ -12,8 +12,8 @@ liblzma-dev python3 python3-pip python3-venv git
 # Create environment directory
 mkdir -p ~/xlibre_logo
 cd ~/xlibre_logo
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv xlibre_env
+source xlibre_env/bin/activate
 
 # Install Python dependencies
 pip install --upgrade pip
