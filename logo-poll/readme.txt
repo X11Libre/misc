@@ -16,7 +16,7 @@ source xlibre_env/bin/activate
 
 # Install Python dependencies
 pip install --upgrade pip
-pip install Pillow imagehash cairosvg PyGitHub requests logging mimetypes beautifulsoup4
+pip install Pillow imagehash cairosvg PyGitHub requests logging beautifulsoup4
 
 # You are now ready to use all the scripts.
 # In the scripts you will need to replace GITHUB_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxxxxxx" with your github token.
