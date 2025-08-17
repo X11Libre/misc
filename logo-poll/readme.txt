@@ -1,29 +1,34 @@
 This are python3 scripts to create a logo-poll for XLibre.
 
-Prerequisites.
-For Debian, install the following packages:
-$ sudo apt install python3-venv python3-full
-$ sudo python3 -m pip install --upgrade pip
-Next, navigate to the /misc/logo-poll directory:
-$ cd /directory_of//misc/logo-poll directory
-Next, create the Python environment:
-$ python3 -m venv xlibre_env
-Activate it:
-$ source xlibre_env/bin/activate
-Add the Python dependencies:
-$ pip install --upgrade pip
-$ pip install requests beautifulsoup4 Pillow cairosvg
+# Prerequisites.
 
-You are now ready to use all the scripts.
+# Install Debian dependencies
+sudo apt-get update
+sudo apt-get install -y make build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev \
+liblzma-dev python3 python3-pip python3-venv git
 
-- resize_logos_with_users.py (to download all logos from https://github.com/X11Libre/xserver/issues/112 and resize them)
+# Create environment directory
+mkdir -p ~/xlibre_logo
+cd ~/xlibre_logo
+python3 -m venv venv
+source venv/bin/activate
 
-- rename_indexed_nodouble.py (to check for identical logos and reindex all logo names)
+# Install Python dependencies
+pip install --upgrade pip
+pip install Pillow imagehash cairosvg PyGitHub requests beautifulsoup4
 
-- upload_logos.py (to upload all the logos to a github directory)
+# You are now ready to use all the scripts.
 
-- create_poll_issue_gallery.py (to create the poll in github/issue)
+- python3 resize_logos_with_users.py (to download all logos from https://github.com/X11Libre/xserver/issues/112 and resize them)
 
-- calculate_poll_results_restrict_user.py (to calculate the poll results; you can use crontab to update the results every xx minutes)
+- python3 rename_indexed_nodouble.py (to check for identical logos and reindex all logo names)
+
+- python3 upload_logos.py (to upload all the logos to a github directory)
+
+- python3 create_poll_issue_gallery.py (to create the poll in github/issue)
+
+- python3 calculate_poll_results_restrict_user.py (to calculate the poll results; you can use crontab to update the results every xx minutes)
 
 Have fun!
