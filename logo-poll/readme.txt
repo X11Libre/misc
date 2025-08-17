@@ -10,8 +10,7 @@ libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev \
 liblzma-dev python3 python3-pip python3-venv git
 
 # Create environment directory
-mkdir -p ~/xlibre_logo
-cd ~/xlibre_logo
+cd ~/misc/logo-poll
 python3 -m venv xlibre_env
 source xlibre_env/bin/activate
 
