@@ -20,6 +20,8 @@ pip install Pillow imagehash cairosvg PyGitHub requests logging beautifulsoup4
 
 # You are now ready to use all the scripts.
 # In the scripts you will need to replace GITHUB_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxxxxxx" with your github token.
+  To create a GitHub access token, in the upper-right corner of any page on GitHub, click your profile picture, then click Settings.
+  In the left sidebar, click "Developer settings" then "Token (classic)", "Generate new token" and copy+paste the access token.
 # Also adapt the local directories with your own and check the options as you wish.
 
 python3 resize_logos_with_users.py (to download all logos from https://github.com/X11Libre/xserver/issues/112 and resize them)
