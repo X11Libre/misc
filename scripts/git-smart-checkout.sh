@@ -190,7 +190,7 @@ fetch_from_url_for_ref() {
     if [[ "$mode" == "shallow" ]]; then
         flags=( "${fetch_flags_shallow[@]}" )
     else
-        flags( "${fetch_flags_full[@]}" )
+        flags=( "${fetch_flags_full[@]}" )
     fi
 
     if is_sha_like "$ref"; then
