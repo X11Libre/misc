@@ -196,8 +196,7 @@ fetch_from_url_for_ref() {
     if is_sha_like "$ref"; then
         # Try fetching the specific commit object
         # FETCH_HEAD will point to the fetched object on success.
-        git_retry "fetch $url commit $ref ($mode)" \
-            git fetch "${flags[@]}" "$url" "$ref"
+        git fetch "${flags[@]}" "$url" "$ref"
         return $?
     else
         # Try specific namespaces to avoid extra refs
@@ -208,7 +207,7 @@ fetch_from_url_for_ref() {
         )
         local t
         for t in "${try[@]}"; do
-            if git_retry "fetch $url $t ($mode)" git fetch "${flags[@]}" "$url" "$t"; then
+            if git fetch "${flags[@]}" "$url" "$t"; then
                 return 0
             fi
         done
@@ -219,14 +218,14 @@ fetch_from_url_for_ref() {
 fetch_ok=0
 for u in "${URLS[@]}"; do
     # 1) Try shallow
-    if fetch_from_url_for_ref "$u" "$REF" "shallow"; then
+    if git_retry "fetch url: $u $REF" fetch_from_url_for_ref "$u" "$REF" "shallow"; then
         fetch_ok=1
         break
     fi
     # 2) Optional fallback to full (still filtered blobs)
     if (( FULL_IF_NEEDED )); then
         log_warn "shallow fetch insufficient. trying without --depth from $u ..."
-        if fetch_from_url_for_ref "$u" "$REF" "full"; then
+        if git_retry "fetch url: $u $REF" fetch_from_url_for_ref "$u" "$REF" "full"; then
             fetch_ok=1
             break
         fi
