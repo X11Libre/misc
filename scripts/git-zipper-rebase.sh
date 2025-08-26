@@ -108,7 +108,7 @@ fi
 while [[ $X -gt 0 ]]; do
     NEXT=$(( X - 1 ))
     TARGET_COMMIT=$(git rev-parse "${TARGET}~${NEXT}")
-    log_info ">>> Rebasing onto $TARGET_COMMIT (target~$NEXT)"
+    log_info ">>> Rebasing onto $TARGET_COMMIT ($TARGET~$NEXT)"
 
     if [[ "${DRYRUN:-0}" -eq 1 ]]; then
         X=$NEXT
