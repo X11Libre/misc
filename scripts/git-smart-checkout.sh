@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# git-smart-checkout: Clone/Reuse a repo and force-checkout a given ref (branch/tag/commit),
+# git-smart-checkout: clone/reuse a repo and force-checkout a given ref (branch/tag/commit),
 #                     with mirror URLs, minimal transfer, and automatic retries.
 
 # Robustness
@@ -18,34 +18,24 @@ Usage:
   git-smart-checkout.sh -n <local-dir> -r <ref|commit> -u <url> [-u <url2> ...] [options]
 
 Required:
-  -n, --name <dir>         Lokales Zielverzeichnis (Repo-Name / Pfad).
-  -r, --ref  <ref>         Branch, Tag oder Commit-SHA.
-  -u, --url  <url>         Mindestens eine Repo-URL (weitere für Mirror-Fallback wiederholen).
+  -n, --name <dir>         local target directory (repo / path).
+  -r, --ref  <ref>         branch, tag or Commit-SHA.
+  -u, --url  <url>         repo URL (multiple for mirror fallbacks)
 
 Options:
-      --retries <N>        Anzahl der Versuche pro Netzoperation (default: 3).
-      --sleep   <SEC>      Wartezeit zwischen Versuchen in Sekunden (default: 3).
-      --no-clean           Arbeitsverzeichnis nach Checkout NICHT hart bereinigen.
-      --full-if-needed     Falls Commit mit shallow fetch nicht erreichbar ist, ohne --depth erneut versuchen.
-      --keep-remote        Remote-Config nicht verändern (ansonsten wird 'origin' auf die erste URL gesetzt).
-      --depth <N>          Shallow-Depth für Fetch (default: 1). Nur für Branch/Tag sinnvoll.
-      --no-partial         Partial clone/filter deaktivieren (lädt sonst blobs on-demand).
-      --no-tags            Tags standardmäßig NICHT holen (default). Entfernen, um Tags zu erlauben.
-      --allow-tags         Tags mit holen (überschreibt --no-tags).
+      --retries <N>        amount of retries (default: 3).
+      --sleep   <SEC>      wait seconds between retries (default: 3).
+      --no-clean           no hard working dir cleanup after checkout
+      --full-if-needed     if commit not reachable with shallow fetch, retry again without --depth
+      --keep-remote        dont change remote config (otherwise set 'origin' to first URL).
+      --depth <N>          shallow depth for fetch (default: 1). only useful for branch/tag
+      --no-partial         disable partial clone/filter (otherwise load blobs on-demand).
+      --no-tags            dont fetch tags by default (default).
+      --allow-tags         fetch tags (overwrites --no-tags).
 
-Notes:
-- Minimaler Transfer: --filter=blob:none, --no-tags und gezielte Refspecs.
-- Für spezifische Commits wird zunächst shallow versucht; ggf. mit --full-if-needed erneut ohne --depth.
-- Checkout erfolgt standardmäßig detached auf die exakt gefetchte Commit-ID (robust bei Branch/Tag-Änderungen).
-
-Beispiele:
-  # Branch minimal holen (aus Mirrors), forciert auschecken:
+Examples:
   git-smart-checkout.sh -n myrepo -r main -u https://github.com/org/proj.git -u https://gitmirror/org/proj.git
-
-  # Tag auschecken:
   git-smart-checkout.sh -n myrepo -r v2.1.0 -u ssh://git@example.com/proj.git
-
-  # Bestimmte Commit-SHA (fällt bei Bedarf auf non-shallow zurück):
   git-smart-checkout.sh -n myrepo -r 1a2b3c4d5e --full-if-needed -u https://github.com/org/proj.git
 USAGE
     exit 2
@@ -90,7 +80,7 @@ done
 if [[ -z "$NAME" ]]; then log_error "Missing --name"; usage; fi
 if [[ -z "$REF"  ]]; then log_error "Missing --ref";  usage; fi
 if [[ ${#URLS[@]} -eq 0 ]]; then log_error "At least one --url is required"; usage; fi
-if ! command -v git >/dev/null 2>&1; then log_error "'git' nicht gefunden"; exit 127; fi
+if ! command -v git >/dev/null 2>&1; then log_error "'git' not found"; exit 127; fi
 
 # ---- Helpers ----------------------------------------------------------------
 is_git_dir() {
@@ -120,10 +110,10 @@ git_retry() {
         fi
         rc=$?
         if (( attempt >= RETRIES )); then
-            log_error "$desc: fehlgeschlagen nach $RETRIES Versuchen (rc=$rc)"
+            log_error "$desc: failed after $RETRIES tries (rc=$rc)"
             return "$rc"
         fi
-        log_warn "$desc: Versuch $attempt fehlgeschlagen (rc=$rc). Erneuter Versuch..."
+        log_warn "$desc: try $attempt failed (rc=$rc). retrying ..."
         sleep_backoff "$attempt"
         attempt=$(( attempt + 1 ))
     done
@@ -142,23 +132,23 @@ fetch_flags_full=( "${fetch_flags_common[@]}" )
 # ---- Clone or reuse existing ------------------------------------------------
 if [[ -d "$NAME" ]]; then
     if is_git_dir "$NAME"; then
-        log_info "Bestehendes Git-Repo erkannt: $NAME"
+        log_info "detected existing git repository: $NAME"
         if (( KEEP_REMOTE == 0 )); then
-            log_info "Setze 'origin' auf erste URL: ${URLS[0]}"
+            log_info "setting 'origin' to first URL: ${URLS[0]}"
             if git -C "$NAME" remote get-url origin >/dev/null 2>&1; then
                 git -C "$NAME" remote set-url origin "${URLS[0]}"
             else
                 git -C "$NAME" remote add origin "${URLS[0]}"
             fi
         else
-            log_info "--keep-remote: Remote-Konfiguration unverändert."
+            log_info "--keep-remote: remote config unchanged."
         fi
     else
-        log_error "Verzeichnis '$NAME' existiert, ist aber kein Git-Repo."
+        log_error "directory '$NAME' exists, but not a git repository."
         exit 1
     fi
 else
-    # Frisches Clone: minimal & no-checkout
+    # fresh clone: minimal & no-checkout
     mkdir -p "$(dirname -- "$NAME")"
     clone_ok=0
     for u in "${URLS[@]}"; do
@@ -172,7 +162,7 @@ else
         fi
     done
     if (( clone_ok == 0 )); then
-        log_error "Clone von allen URLs fehlgeschlagen."
+        log_error "clone failed on all URLs."
         exit 1
     fi
 fi
@@ -235,7 +225,7 @@ for u in "${URLS[@]}"; do
     fi
     # 2) Optional fallback to full (still filtered blobs)
     if (( FULL_IF_NEEDED )); then
-        log_warn "Shallow-Fetch nicht ausreichend. Versuche ohne --depth von $u ..."
+        log_warn "shallow fetch insufficient. trying without --depth from $u ..."
         if fetch_from_url_for_ref "$u" "$REF" "full"; then
             fetch_ok=1
             break
@@ -244,35 +234,35 @@ for u in "${URLS[@]}"; do
 done
 
 if (( fetch_ok == 0 )); then
-    log_error "Fetch der Referenz '$REF' aus allen URLs fehlgeschlagen."
+    log_error "failed fetching reference '$REF' on all URLs."
     exit 1
 fi
 
 # Resolve fetched commit
 TARGET_COMMIT="$(git rev-parse --verify --quiet FETCH_HEAD || true)"
 if [[ -z "$TARGET_COMMIT" ]]; then
-    log_error "FETCH_HEAD konnte nicht aufgelöst werden."
+    log_error "couldnt resolve FETCH_HEAD."
     exit 1
 fi
-log_info "Gefetched: $TARGET_COMMIT"
+log_info "fetched: $TARGET_COMMIT"
 
 # ---- Forced checkout --------------------------------------------------------
 # We checkout detached at the exact commit to be fully deterministic.
 # (No implicit branch tracking; avoids surprises if remote refs move.)
 if (( CLEAN )); then
-    log_info "Bereinige Arbeitsverzeichnis (reset --hard, clean -fdx)"
+    log_info "cleaning working dir (reset --hard, clean -fdx)"
     git reset --hard
     git clean -fdx
 fi
 
-log_info "Forciere Checkout (detached) auf $TARGET_COMMIT"
+log_info "forced checkout (detached) auf $TARGET_COMMIT"
 # Ensure no stray temp ref prevents checkout
 git update-ref -d "refs/tmp/$REF" >/dev/null 2>&1 || true
 git checkout --force --detach "$TARGET_COMMIT"
 
 # Small summary
-log_info "Arbeitsstatus:"
+log_info "working dir:"
 git --no-pager log -1 --oneline
 git --no-pager status --short --branch
 
-log_info "Fertig."
+log_info "Done."
