@@ -1,0 +1,24 @@
+name: sync mirrors
+on:
+    schedule:
+        - cron: '*/15 * * * *'
+    push:
+
+permissions:
+    actions: write
+    contents: write
+
+env:
+    GH_TOKEN: ${{ github.token }}
+
+jobs:
+    sync_mirrors:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository code
+              uses: actions/checkout@v4
+
+            - name: run sync
+              run: ./scripts/gh-update-mirrors.sh
+              env:
+                GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
