@@ -60,9 +60,11 @@ declare -A keep
 count=0
 for entry in "${entries[@]}"; do
     ((count++)) || true
-    run_id="${entry%%|*}"
-    if ((count <= KEEP)); then
-        keep["$run_id"]=1
+    if [ "$entry" ]; then
+        run_id="${entry%%|*}"
+        if ((count <= KEEP)); then
+            keep["$run_id"]=1
+        fi
     fi
 done
 
