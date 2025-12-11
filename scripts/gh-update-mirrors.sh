@@ -51,7 +51,7 @@ rm -Rf "${TEMPDIR}"
 FDO="https://gitlab.freedesktop.org"
 
 update_mirror_fdo pixman        pixman/pixman.git
-update_mirror_fdo pthread_stubs xorg/lib/pthread-stubs.git
+update_mirror_fdo pthread-stubs xorg/lib/pthread-stubs.git
 update_mirror_fdo xcbproto      xorg/proto/xcbproto.git
 update_mirror_fdo libX11        xorg/lib/libX11.git
 update_mirror_fdo libXau        xorg/lib/libXau.git
@@ -65,9 +65,13 @@ update_mirror_fdo libxcb        xorg/lib/libxcb.git
 update_mirror_fdo libxcb-util   xorg/lib/libxcb-util.git
 update_mirror_fdo libxcb-image  xorg/lib/libxcb-image.git
 update_mirror_fdo libxcb-wm     xorg/lib/libxcb-wm.git
+update_mirror_fdo libxcb-keysyms        xorg/lib/libxcb-keysyms.git
+update_mirror_fdo libxcb-render-util    xorg/lib/libxcb-render-util.git
+update_mirror_fdo libxtrans     xorg/lib/libxtrans
 update_mirror_fdo drm           mesa/drm
 update_mirror_fdo libxcvt       xorg/lib/libxcvt.git
 update_mirror_fdo xorgproto     xorg/proto/xorgproto.git
 update_mirror_fdo piglit        mesa/piglit.git
 update_mirror_fdo xts           xorg/test/xts
 update_mirror_fdo rendercheck   xorg/test/rendercheck
+update_mirror_fdo freetype      freetype/freetype
