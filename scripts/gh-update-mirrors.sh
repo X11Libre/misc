@@ -43,20 +43,21 @@ update_mirror() {
 
 update_mirror_fdo() {
     update_mirror "fdo.$1" "https://gitlab.freedesktop.org/$2"
-
 }
 
 rm -Rf "${TEMPDIR}"
 
 FDO="https://gitlab.freedesktop.org"
 
+update_mirror_fdo xset          xorg/app/xset
+update_mirror_fdo xorg-macros   xorg/util/macros
 update_mirror_fdo pixman        pixman/pixman.git
 update_mirror_fdo pthread-stubs xorg/lib/pthread-stubs.git
 update_mirror_fdo xcbproto      xorg/proto/xcbproto.git
 update_mirror_fdo libX11        xorg/lib/libX11.git
 update_mirror_fdo libXau        xorg/lib/libXau.git
 update_mirror_fdo libxkbfile    xorg/lib/libxkbfile.git
-update_mirror_fdo font-util     xorg//font/util.git
+update_mirror_fdo font-util     xorg/font/util.git
 update_mirror_fdo libfontenc    xorg/lib/libfontenc.git
 update_mirror_fdo libXfont      xorg/lib/libXfont.git
 update_mirror_fdo libXdmcp      xorg/lib/libXdmcp.git
