@@ -6,7 +6,7 @@ UPSTREAM_REMOTE="origin"
 UPSTREAM_BRANCH="release/25.0"
 UPSTREAM_REF="$UPSTREAM_REMOTE/$UPSTREAM_BRANCH"
 DEFAULT_MODE="rebase"
-REVIEWERS="mikedld,jonhermansen,josephcrowell,cepelinas9000,algrid,stefan11111,b-aaz,ONykyf,X11Libre/dev"
+REVIEWERS="X11Libre/dev"
 
 ### HELP
 if [[ $# -lt 1 ]]; then
