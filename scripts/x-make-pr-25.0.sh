@@ -7,6 +7,7 @@ UPSTREAM_BRANCH="release/25.0"
 UPSTREAM_REF="$UPSTREAM_REMOTE/$UPSTREAM_BRANCH"
 DEFAULT_MODE="rebase"
 REVIEWERS="X11Libre/dev"
+MILESTONE="25.0.x bugfix"
 
 ### HELP
 if [[ $# -lt 1 ]]; then
@@ -57,7 +58,7 @@ INCUBATOR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ -z "$BRANCH_NAME" ]]; then
   FIRST_SUBJECT=$(git log -1 --pretty=%s "${COMMITS[0]}")
   BRANCH_NAME=$(echo "$FIRST_SUBJECT" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-')
-  BRANCH_NAME="pr/${BRANCH_NAME}_$(date +%Y-%m-%d_%H-%M-%S)"
+  BRANCH_NAME="pr/25.0/${BRANCH_NAME}_$(date +%Y-%m-%d_%H-%M-%S)"
 fi
 
 TMP_BRANCH="tmp-${BRANCH_NAME}"
@@ -87,14 +88,14 @@ git push "$UPSTREAM_REMOTE" "$BRANCH_NAME"
 
 ### CREATE PR
 if [[ ${#COMMITS[@]} -eq 1 ]]; then
-  gh pr create -a "@me" --fill -B "$UPSTREAM_BRANCH" -H "$BRANCH_NAME" --reviewer "$REVIEWERS"
+  gh pr create -m "$MILESTONE" -a "@me" --fill -B "$UPSTREAM_BRANCH" -H "$BRANCH_NAME" --reviewer "$REVIEWERS"
 else
   TMP_FILE=$(mktemp)
   echo "# Pull Request description (edit below, lines starting with # are ignored)" > "$TMP_FILE"
   echo "" >> "$TMP_FILE"
   git log --format='%h %s' "${COMMITS[@]}" >> "$TMP_FILE"
   ${EDITOR:-vi} "$TMP_FILE"
-  gh pr create -a "@me" --title "PR: ${COMMITS[*]}" --body-file "$TMP_FILE" -B "$UPSTREAM_BRANCH" -H "$BRANCH_NAME" --reviewer "$REVIEWERS"
+  gh pr create -m "$MILESTONE" -a "@me" --title "PR: ${COMMITS[*]}" --body-file "$TMP_FILE" -B "$UPSTREAM_BRANCH" -H "$BRANCH_NAME" --reviewer "$REVIEWERS"
   rm -f "$TMP_FILE"
 fi
 
