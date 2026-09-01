@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# gh-retry-transient-failed — restart CI jobs that likely failed from infrastructure issues.
+#
+# Reads [make-pr] from .git/config to determine the GitHub remote, then
+# examines every open PR for check-runs that failed after running for
+# ≥20 minutes — a common sign of runner flakiness rather than a real
+# build/test failure.  Failed jobs in fully-finished workflow runs are
+# restarted with `gh run rerun --failed`.
+#
+# Usage:  gh-retry-transient-failed [--dry-run]
+set -euo pipefail
+
+DRY_RUN=false
+if [[ "${1:-}" == "--dry-run" ]]; then
+    DRY_RUN=true
+    shift
+fi
+
+########################################################################
+# 1. Derive owner/repo from git config
+########################################################################
+UPSTREAM_REMOTE=$(git config --local make-pr.upstream-remote || echo "origin")
+REMOTE_URL=$(git config --local remote."$UPSTREAM_REMOTE".url || true)
+
+# Normalise the URL to "owner/repo" form.
+REPO=""
+if [[ "$REMOTE_URL" =~ ^git@github\.com:(.+)/(.+)\.git$ ]]; then
+    REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+elif [[ "$REMOTE_URL" =~ ^https://github\.com/(.+)/(.+)\.git$ ]]; then
+    REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+elif [[ "$REMOTE_URL" =~ ^https://github\.com/(.+)/(.+)$ ]]; then
+    REPO="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+fi
+
+if [[ -z "$REPO" ]]; then
+    echo "ERROR: cannot parse owner/repo from remote '$UPSTREAM_REMOTE' url: $REMOTE_URL" >&2
+    exit 1
+fi
+
+echo "Repo: $REPO  (from remote '$UPSTREAM_REMOTE')"
+echo ""
+
+########################################################################
+# 2. Gather all open PRs
+########################################################################
+PR_LIST=$(gh pr list --repo "$REPO" --state open --json number,headRefName --jq '.[] | "\(.number)|\(.headRefName)"' 2>/dev/null)
+
+if [[ -z "$PR_LIST" ]]; then
+    echo "No open PRs found."
+    exit 0
+fi
+
+########################################################################
+# 3. For each PR, inspect status checks
+########################################################################
+TRIGGERED=0
+
+while IFS='|' read -r PR_NUM BRANCH; do
+    echo "--- PR #$PR_NUM ($BRANCH) ---"
+
+    # Grab all check-runs for this PR.
+    ROLLUP=$(gh pr view "$PR_NUM" --repo "$REPO" --json statusCheckRollup \
+        --jq '.statusCheckRollup[] | select(.__typename == "CheckRun") | {name, status, conclusion, startedAt, completedAt, detailsUrl}' 2>/dev/null)
+
+    if [[ -z "$ROLLUP" ]]; then
+        echo "  (no check runs found)"
+        continue
+    fi
+
+    # Group by check-run *name* and keep only the latest run of each.
+    LATEST=$(echo "$ROLLUP" | jq -s '
+        group_by(.name)
+        | map(max_by(.startedAt))
+        | .[]
+    ')
+
+    # Are there any completed failures that look transient?
+    TRANSIENT_JOBS=$(echo "$LATEST" | jq -c '
+        select(.status == "COMPLETED" and .conclusion == "FAILURE")
+        | select( ((.completedAt | fromdateiso8601) - (.startedAt | fromdateiso8601)) >= 1200 )
+    ' 2>/dev/null) || true
+
+    if [[ -z "$TRANSIENT_JOBS" ]]; then
+        echo "  No transient failures."
+        continue
+    fi
+
+    # Print what we found.
+    echo "  Transient failures:"
+    echo "$TRANSIENT_JOBS" | jq -r '
+        "    " + .name
+        + "  (ran for " + (((.completedAt | fromdateiso8601) - (.startedAt | fromdateiso8601)) / 60 | floor | tostring) + "m)"
+    '
+
+    # Collect unique workflow-run IDs (detailsUrl → /runs/<run-id>/job/…)
+    RUN_IDS=$(echo "$TRANSIENT_JOBS" | jq -r '
+        .detailsUrl
+        | capture("/actions/runs/(?<id>[0-9]+)/job/")
+        | .id
+    ' | sort -u)
+
+    for RUN_ID in $RUN_IDS; do
+        # Only restart if the whole run is finished.
+        RUN_STATUS=$(gh run view "$RUN_ID" --repo "$REPO" --json status,conclusion --jq '{status, conclusion}' 2>/dev/null)
+        STATUS=$(echo "$RUN_STATUS" | jq -r '.status')
+        CONCLUSION=$(echo "$RUN_STATUS" | jq -r '.conclusion // empty')
+
+        if [[ "$STATUS" != "completed" ]]; then
+            echo "  Run $RUN_ID still $STATUS — skipping (must finish first)."
+            continue
+        fi
+
+        if [[ "$CONCLUSION" == "success" ]]; then
+            echo "  Run $RUN_ID succeeded globally — no rerun needed."
+            continue
+        fi
+
+        if $DRY_RUN; then
+            echo "  [DRY RUN] Would rerun failed jobs in run $RUN_ID"
+        else
+            echo "  Rerunning failed jobs in run $RUN_ID …"
+            if gh run rerun "$RUN_ID" --repo "$REPO" --failed 2>&1; then
+                echo "  ✓ Done."
+                TRIGGERED=$((TRIGGERED + 1))
+            else
+                echo "  ✗ gh run rerun failed (workflow file may have changed)."
+            fi
+        fi
+    done
+done <<< "$PR_LIST"
+
+echo ""
+echo "=== done: $TRIGGERED reruns triggered ==="
